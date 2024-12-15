@@ -35,14 +35,14 @@ export const setupServer = () => {
     const { contactId } = req.params;
     const data = await getByIdContacts(contactId);
     if (!data) {
-      res.status(404).json({
+      return res.status(404).json({
         status: 404,
-        message: `Contact with id${contactId} not found`,
+        message: `Contact with id ${contactId} not found`,
       });
     }
     res.json({
       status: 200,
-      message: 'Successfully found contact with id {contactId}!',
+      message: `Successfully found contact with id ${contactId}!`,
       data,
     });
   });
@@ -53,6 +53,13 @@ export const setupServer = () => {
       message: 'Not found',
     });
   });
+
+  app.use((err, req, res, next) => {
+    res.status(500).json({
+      message: 'Something went wrong',
+    });
+  });
+
   const port = Number(process.env.PORT) || 3000;
   app.listen(port, () => console.log(`Server running on ${port} port`));
 };
