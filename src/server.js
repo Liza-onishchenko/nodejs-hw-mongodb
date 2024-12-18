@@ -15,7 +15,6 @@ export const setupServer = () => {
 
   app.use(express.json());
 
-  // логування з піно
   // app.use(logger);
 
   app.use('/contacts', contactRouter);
