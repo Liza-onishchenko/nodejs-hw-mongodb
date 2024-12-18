@@ -27,8 +27,9 @@ const contactSchema = new Schema(
     },
   },
   {
+    versionKey: false, // Вимикає поле __v
     timestamps: true,
-  },
+  }, // Додає поля createdAt і updatedAt
 );
 //На основі схеми створ модель( клас)
 const ContactCollection = model('contact', contactSchema);
