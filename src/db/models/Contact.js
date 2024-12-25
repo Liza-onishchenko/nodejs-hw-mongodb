@@ -1,4 +1,6 @@
 import { Schema, model } from 'mongoose';
+import { typeList } from '../../constants/contacts.js';
+import { handleSaveError, setUpdateSettings } from './hooks.js';
 
 const contactSchema = new Schema(
   {
@@ -21,7 +23,7 @@ const contactSchema = new Schema(
     },
     contactType: {
       type: String,
-      enum: ['work', 'home', 'personal'],
+      enum: typeList,
       required: true,
       default: 'personal',
     },
@@ -31,6 +33,14 @@ const contactSchema = new Schema(
     timestamps: true,
   }, // Додає поля createdAt і updatedAt
 );
+
+//додати статуст помилки через хук для додавання
+contactSchema.post('save', handleSaveError);
+
+contactSchema.pre('findOneAndUpdate', setUpdateSettings);
+
+//додати статуст помилки через хук для оновлення
+contactSchema.post('findOneAndUpdate', handleSaveError);
 //На основі схеми створ модель( клас)
 const ContactCollection = model('contact', contactSchema);
 
