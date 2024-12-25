@@ -5,7 +5,6 @@ import {
   getByIdContacts,
   updateContact,
 } from '../services/contacts.js';
-
 import createError from 'http-errors';
 
 export const getContactsController = async (req, res) => {
@@ -24,9 +23,6 @@ export const getByIdContactController = async (req, res) => {
 
   if (!data) {
     throw createError(404, `Contact with id ${contactId} not found`);
-    // const error = new Error(`Contact with id ${contactId} not found`);
-    // error.status = 404;
-    // throw error;
   }
 
   res.json({
