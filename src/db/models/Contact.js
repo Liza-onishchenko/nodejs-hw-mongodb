@@ -41,6 +41,16 @@ contactSchema.pre('findOneAndUpdate', setUpdateSettings);
 
 //додати статуст помилки через хук для оновлення
 contactSchema.post('findOneAndUpdate', handleSaveError);
+
+export const sortByList = [
+  '_id',
+  'name',
+  'phoneNumber',
+  'email',
+  'isFavourite',
+  'contactType',
+];
+
 //На основі схеми створ модель( клас)
 const ContactCollection = model('contact', contactSchema);
 
