@@ -12,6 +12,7 @@ export const getAllContacts = async ({
   const skip = (page - 1) * limit;
 
   const contactsQuery = ContactCollection.find(); //отрим запит
+
   if (filter.contactType) {
     contactsQuery.where('contactType').equals(filter.contactType);
   }
@@ -19,15 +20,15 @@ export const getAllContacts = async ({
     contactsQuery.where('isFavourite').equals(filter.isFavourite);
   }
 
-  const contacts = await contactsQuery
-    .skip(skip)
-    .limit(limit)
-    .sort({ [sortBy]: sortOrder })
-    .exec();
-
   const totalItems = await ContactCollection.find()
     .merge(contactsQuery)
     .countDocuments();
+
+  const contacts = await contactsQuery
+    .skip(skip) //ск-ки пропустити з початку
+    .limit(limit) //ск-ки
+    .sort({ [sortBy]: sortOrder })
+    .exec();
 
   const paginationData = calcPaginationData({ totalItems, page, perPage });
 
