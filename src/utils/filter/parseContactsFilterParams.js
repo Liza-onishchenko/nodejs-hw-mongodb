@@ -18,9 +18,9 @@ const parseBoolean = (value) => {
   return; //якщо не true/false поверта undefined
 };
 
-export const parseContactsFilterParams = ({ contactType, isFavorite }) => {
+export const parseContactsFilterParams = ({ contactType, isFavourite }) => {
   const parsedContactType = parseContactType(contactType);
-  const parsedIsFavorite = parseBoolean(isFavorite);
+  const parsedIsFavorite = parseBoolean(isFavourite);
 
   return {
     //обєкт з обробленим знач-ям

@@ -9,7 +9,10 @@ import {
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import { addContactsController } from '../controllers/contacts.js';
 import { validateBody } from '../middlewares/validateBody.js';
-import { contactAddSchema } from '../validation/contact.js';
+import {
+  contactAddSchema,
+  contactUpdateSchema,
+} from '../validation/contact.js';
 import { isValidId } from '../middlewares/isValidId.js';
 
 const contactRouter = Router();
@@ -38,7 +41,7 @@ contactRouter.put(
 contactRouter.patch(
   '/:contactId',
   isValidId,
-  validateBody(contactAddSchema),
+  validateBody(contactUpdateSchema),
   ctrlWrapper(patchContactsController),
 );
 

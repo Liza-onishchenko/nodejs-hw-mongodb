@@ -10,11 +10,14 @@ import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { sortByList } from '../db/models/Contact.js';
 import { parseContactsFilterParams } from '../utils/filter/parseContactsFilterParams.js';
+import { contactAddSchema } from '../validation/contact.js';
 
 export const getContactsController = async (req, res) => {
   const { page, perPage } = parsePaginationParams(req.query);
   const { sortBy, sortOrder } = parseSortParams(req.query, sortByList);
   const filter = parseContactsFilterParams(req.query);
+  console.log(filter);
+
   const data = await getAllContacts({
     page,
     perPage,
@@ -35,7 +38,7 @@ export const getByIdContactController = async (req, res) => {
   const data = await getByIdContacts(contactId);
 
   if (!data) {
-    throw createError(404, `Contact with id ${contactId} not found`);
+    throw createError(400, `Contact with id ${contactId} not found`);
   }
 
   res.json({
