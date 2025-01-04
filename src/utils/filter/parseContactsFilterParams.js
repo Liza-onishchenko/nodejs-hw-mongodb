@@ -25,6 +25,6 @@ export const parseContactsFilterParams = ({ contactType, isFavourite }) => {
   return {
     //обєкт з обробленим знач-ям
     contactType: parsedContactType,
-    isFavorite: parsedIsFavorite,
+    isFavourite: parsedIsFavorite,
   };
 };
