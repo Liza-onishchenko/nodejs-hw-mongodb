@@ -34,9 +34,10 @@ const contactSchema = new Schema(
   }, // Додає поля createdAt і updatedAt
 );
 
-//додати статуст помилки через хук для додавання
+//додати статуст помилки через хук для додавання якщо валідація не пройшла
 contactSchema.post('save', handleSaveError);
 
+//перед оновл-ням включаєм валідацію
 contactSchema.pre('findOneAndUpdate', setUpdateSettings);
 
 //додати статуст помилки через хук для оновлення
