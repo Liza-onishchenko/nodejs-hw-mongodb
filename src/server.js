@@ -5,6 +5,7 @@ import contactRouter from './routers/contacts.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { logger } from './middlewares/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import authRouter from '../src/routers/auth.js';
 
 dotenv.config(); //для роботи з змін.оточ
 
@@ -16,6 +17,8 @@ export const setupServer = () => {
   app.use(express.json());
 
   // app.use(logger);
+
+  app.use('/auth', authRouter);
 
   app.use('/contacts', contactRouter);
 
