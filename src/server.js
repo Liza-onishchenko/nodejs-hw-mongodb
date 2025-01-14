@@ -6,6 +6,7 @@ import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { logger } from './middlewares/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import authRouter from '../src/routers/auth.js';
+import cookieParser from 'cookie-parser';
 
 dotenv.config(); //для роботи з змін.оточ
 
@@ -15,6 +16,8 @@ export const setupServer = () => {
   app.use(cors());
 
   app.use(express.json());
+
+  app.use(cookieParser());
 
   // app.use(logger);
 
