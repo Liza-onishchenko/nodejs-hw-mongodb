@@ -4,6 +4,15 @@ import bcrypt from 'bcrypt';
 import SessionCollection from '../db/models/Session.js';
 import { randomBytes } from 'crypto';
 import { accessTokenLifetime, refreshTokenLifetim } from '../constants/user.js';
+import exp from 'constants';
+
+//фу-ція для логіну і рефреш токену
+const createSessionData = () => ({
+  accessToken: randomBytes(30).toString('base64'), // створення токену доступу
+  refreshToken: randomBytes(30).toString('base64'), // створення refresh токену
+  accessTokenValidUntil: Date.now() + accessTokenLifetime, // час дії токену доступу
+  refreshTokenValidUntil: Date.now() + refreshTokenLifetim, // час дії refresh токену
+});
 
 //реєстрація
 export const register = async (payload) => {
@@ -37,15 +46,40 @@ export const login = async ({ email, password }) => {
 
   await SessionCollection.deleteOne({ userId: user._id }); //видалення сесії якщо вже є
 
-  const accessToken = randomBytes(30).toString('base64'); //створ-ли 2 токени
-  const refreshToken = randomBytes(30).toString('base64');
+  const sessionData = createSessionData();
 
   return SessionCollection.create({
-    //створ=мо і зберігаємо сесію вказуємо час життя
     userId: user._id,
-    accessToken,
-    refreshToken,
-    accessTokenValidUntil: Date.now() + accessTokenLifetime,
-    refreshTokenValidUntil: Date.now() + refreshTokenLifetim,
+    ...sessionData,
   });
 };
+
+export const logout = async (sessionId) => {
+  await SessionCollection.deleteOne({ _id: sessionId });
+};
+
+export const refreshToken = async (payload) => {
+  const oldSession = await SessionCollection.findOne({
+    _id: payload.sessionId,
+    refreshToken: payload.refreshToken,
+  });
+  if (!oldSession) {
+    throw createHttpError(401, 'Session not found');
+  }
+  if (Date.now() > oldSession.refreshTokenValidUntil) {
+    throw createHttpError(401, 'Refresh token expired');
+  }
+
+  await SessionCollection.deleteOne({ _id: payload.sessionId });
+
+  const sessionData = createSessionData();
+
+  return SessionCollection.create({
+    userId: oldSession.userId,
+    ...sessionData,
+  });
+};
+
+export const getUser = (filter) => UserCollection.findOne(filter); //пошук користувача
+
+export const getSession = (filter) => SessionCollection.findOne(filter); //передали умову, є сессія чи нал

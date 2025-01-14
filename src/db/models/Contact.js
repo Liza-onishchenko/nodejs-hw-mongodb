@@ -27,6 +27,11 @@ const contactSchema = new Schema(
       required: true,
       default: 'personal',
     },
+    userId: {
+      type: String,
+      ref: 'user',
+      required: true,
+    },
   },
   {
     versionKey: false, // Вимикає поле __v
