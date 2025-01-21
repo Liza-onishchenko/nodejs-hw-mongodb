@@ -111,7 +111,6 @@ export const patchContactsController = async (req, res) => {
   const cloudinaryEnable = getEnvVar('CLOUDINARY_ENABLE') === 'true';
 
   let photo;
-  console.log('Received file:', req.file);
 
   if (req.file) {
     if (cloudinaryEnable) {
@@ -122,18 +121,14 @@ export const patchContactsController = async (req, res) => {
   }
   const { contactId: _id } = req.params;
   const { _id: userId } = req.user; // Отримуємо userId
-  console.log('Patch request data (body):', req.body); // Логування отриманих даних з тіла запиту
-  console.log('Filter for update:', { _id, userId }); // Логування фільтра
-  console.log('Payload for update:', { ...req.body, userId, photo }); // Логування payload (дані для оновлення)
 
-  const result = await updateContact({ _id, userId }, photo, req.body);
-  console.log('MongoDB update result:', result); // Логування результату оновлення
+  const updateData = { ...req.body, userId, photo };
+  const result = await updateContact({ _id, userId }, updateData);
 
   if (!result) {
     throw createError(404, `Contact with id ${_id} not found`);
   }
-  console.log('Received data:', req.body);
-  console.log('Received file:', req.file);
+
   res.json({
     status: 200,
     message: 'Successfully patched a contact!',
