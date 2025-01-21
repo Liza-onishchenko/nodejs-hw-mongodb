@@ -25,6 +25,12 @@ const userSchema = new Schema(
   },
 ); // Додає поля createdAt і updatedAt
 
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
+};
+
 //додати статуст помилки через хук для додавання якщо валідація не пройшла
 userSchema.post('save', handleSaveError);
 

@@ -2,9 +2,15 @@ import createHttpError from 'http-errors';
 import UserCollection from '../db/models/User.js';
 import bcrypt from 'bcrypt';
 import SessionCollection from '../db/models/Session.js';
-import { randomBytes } from 'crypto';
+import jwt from 'jsonwebtoken';
+import handlebars from 'handlebars';
+import path from 'node:path';
+import fs from 'node:fs/promises';
 import { accessTokenLifetime, refreshTokenLifetim } from '../constants/user.js';
-import exp from 'constants';
+import { randomBytes } from 'crypto';
+import { getEnvVar } from '../utils/getEnvVar.js';
+import { SMTP, TEMPLATES_DIR } from '../constants/index.js';
+import { sendEmail } from '../utils/sendMail.js';
 
 //фу-ція для логіну і рефреш токену
 const createSessionData = () => ({
@@ -83,3 +89,90 @@ export const refreshToken = async (payload) => {
 export const getUser = (filter) => UserCollection.findOne(filter); //пошук користувача
 
 export const getSession = (filter) => SessionCollection.findOne(filter); //передали умову, є сессія чи нал
+
+//Перевіряє наявність користувача,генерує токен,надсилає email.
+export const requestResetToken = async (email) => {
+  const user = await UserCollection.findOne({ email }); //пошук кори-чча за поштою в бд
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+  //Якщо користувача знайдено, створюємо JWT токен для скидання пароля
+  const resetToken = jwt.sign(
+    // генерації нового токена
+    {
+      sub: user._id,
+      email,
+    },
+    getEnvVar('JWT_SECRET'), // Секретний ключ для підпису токена
+    {
+      expiresIn: '15m', //Термін дії
+    },
+  );
+  // Надсилання електронного листа із токеном
+
+  const resetPasswordTemplatePath = path.join(
+    //зберігається шлях до шаблону
+    TEMPLATES_DIR,
+    'reset-password-email.html',
+  );
+
+  const templateSource = (
+    await fs.readFile(resetPasswordTemplatePath)
+  ).toString();
+
+  // зчитаний шаблон --> handlebars.compile(), щоб створити фу-цію,яка генерує HTML-код.
+  const template = handlebars.compile(templateSource);
+  const html = template({
+    //підстановка в шаблон
+    name: user.name,
+    link: `${getEnvVar('APP_DOMAIN')}/reset-password?token=${resetToken}`,
+  });
+
+  // HTML код згенеровано, він відправляється через функцію sendEmail
+  try {
+    await sendEmail({
+      from: getEnvVar(SMTP.SMTP_FROM),
+      to: email,
+      subject: 'Reset your password',
+      html,
+    });
+  } catch (err) {
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
+  }
+};
+
+export const resetPasswod = async (payload) => {
+  let entries; //потрапляють декодовані дані з токену
+
+  try {
+    //перевірки та розшифровки токену
+    entries = jwt.verify(payload.token, getEnvVar('JWT_SECRET'));
+  } catch (err) {
+    if (err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError') {
+      throw createHttpError(401, 'Token is expired or invalid.');
+    }
+    throw err;
+  }
+  // з розшифрованого токену пошук користувача в базі даних
+  const user = await UserCollection.findOne({
+    email: entries.email,
+    _id: entries.sub,
+  });
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+  //видалення сесії
+  await SessionCollection.deleteOne({ userId: user._id });
+
+  //хешування нового паролю
+  const encryptedPassword = await bcrypt.hash(payload.password, 10);
+  //оновлення паролю в Базі даних
+  await UserCollection.updateOne(
+    { _id: user._id },
+    { password: encryptedPassword },
+  );
+};
