@@ -12,6 +12,9 @@ import { parseSortParams } from '../utils/parseSortParams.js';
 import { sortByList } from '../db/models/Contact.js';
 import { parseContactsFilterParams } from '../utils/filter/parseContactsFilterParams.js';
 import { contactAddSchema } from '../validation/contact.js';
+import { saveFileToUploadsDir } from '../utils/saveFileToUploadsDir.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
 
 export const getContactsController = async (req, res) => {
   const { page, perPage } = parsePaginationParams(req.query);
@@ -51,8 +54,20 @@ export const getByIdContactController = async (req, res) => {
 };
 
 export const addContactsController = async (req, res) => {
+  const cloudinaryEnable = getEnvVar('CLOUDINARY_ENABLE') === 'true';
+
+  let photo;
+
+  if (req.file) {
+    if (cloudinaryEnable) {
+      photo = await saveFileToCloudinary(req.file);
+    } else {
+      photo = await saveFileToUploadsDir(req.file); //переміщення папки
+    }
+  }
   const { _id: userId } = req.user;
-  const data = await addContact({ ...req.body, userId }); //дописали айді
+
+  const data = await addContact({ ...req.body, photo, userId });
 
   res.status(201).json({
     status: 201,
@@ -62,34 +77,63 @@ export const addContactsController = async (req, res) => {
 };
 
 export const upsertContactsController = async (req, res) => {
+  const cloudinaryEnable = getEnvVar('CLOUDINARY_ENABLE') === 'true'; //  чи увімкнений Cloudinary
+
+  let photo;
+
+  if (req.file) {
+    if (cloudinaryEnable) {
+      photo = await saveFileToCloudinary(req.file); // увімкнено, зберігаємо фото в Cloudinary
+    } else {
+      photo = await saveFileToUploadsDir(req.file); // не увімкнено, зберігаємо фото в локальну директорію
+    }
+  }
+
   const { contactId } = req.params;
-  const { _id: userId } = req.user;
+  const { _id: userId } = req.user; // userId з токена
 
   const { isNew, data } = await updateContact(
-    contactId,
-    { ...req.body, userId },
-    {
-      upsert: true,
-    },
+    { _id: contactId }, // фільтр як об'єкт
+    { ...req.body, userId, photo }, // Передаємо нові
+    { upsert: true }, //створення нового контакту, якщо не знайдений
   );
 
-  const status = isNew ? 201 : 200;
+  const status = isNew ? 201 : 200; //201 для нового запису 200 - для оновлення
 
   res.status(status).json({
-    status: 200,
+    status: status,
     message: 'Successfully upsert a contact!',
     data,
   });
 };
 
 export const patchContactsController = async (req, res) => {
+  const cloudinaryEnable = getEnvVar('CLOUDINARY_ENABLE') === 'true';
+
+  let photo;
+  console.log('Received file:', req.file);
+
+  if (req.file) {
+    if (cloudinaryEnable) {
+      photo = await saveFileToCloudinary(req.file);
+    } else {
+      photo = await saveFileToUploadsDir(req.file); //переміщення папки
+    }
+  }
   const { contactId: _id } = req.params;
   const { _id: userId } = req.user; // Отримуємо userId
+  console.log('Patch request data (body):', req.body); // Логування отриманих даних з тіла запиту
+  console.log('Filter for update:', { _id, userId }); // Логування фільтра
+  console.log('Payload for update:', { ...req.body, userId, photo }); // Логування payload (дані для оновлення)
 
-  const result = await updateContact({ _id, userId }, req.body);
+  const result = await updateContact({ _id, userId }, photo, req.body);
+  console.log('MongoDB update result:', result); // Логування результату оновлення
+
   if (!result) {
     throw createError(404, `Contact with id ${_id} not found`);
   }
+  console.log('Received data:', req.body);
+  console.log('Received file:', req.file);
   res.json({
     status: 200,
     message: 'Successfully patched a contact!',
