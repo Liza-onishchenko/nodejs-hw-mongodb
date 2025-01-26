@@ -7,6 +7,7 @@ import { logger } from './middlewares/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import authRouter from '../src/routers/auth.js';
 import cookieParser from 'cookie-parser';
+import { swaggerDocs } from './middlewares/swaggerDocs.js';
 
 dotenv.config(); //для роботи з змін.оточ
 
@@ -27,6 +28,7 @@ export const setupServer = () => {
 
   app.use('/contacts', contactRouter);
 
+  app.use('/api-docs', swaggerDocs());
   // обробка неіснуючих шляхів
   app.use(notFoundHandler);
 
