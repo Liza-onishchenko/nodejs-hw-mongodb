@@ -1,0 +1,72 @@
+#/swagger/paths/contsts/patch.yaml
+
+tags:
+  - Contacts
+summary: Update contact information
+operationId: updateContact
+description: 'Updates the contact with the specified ID. You can change any fields of the contact'
+security:
+  - bearerAuth: []
+parameters:
+  - in: path
+    name: contactId
+    schema:
+      type: string
+      example: '65ca67e7ae7f10c88b598384'
+    description: Unique contact identifier
+requestBody:
+  content:
+    multipart/form-data:
+      schema:
+        type: object
+        properties:
+          name:
+            description: "Contact's name"
+            type: string
+            example: 'John Doe'
+          phoneNumber:
+            description: "Contact's phone"
+            type: string
+            example: '+380739874531'
+          email:
+            description: "Contact's email"
+            type: string
+            example: jon89@gmail.com
+          isFavourite:
+            description: 'Indicates whether the contact is in the favorites list'
+            type: boolean
+            example: true
+          contactType:
+            description: 'Type of the contact'
+            type: string
+            enum: ['personal', 'home', 'work']
+            example: 'home'
+          photo:
+            description: "Contact's photo"
+            type: string
+            format: binary
+responses:
+  '200':
+    description: Successfully patched a contact!
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Successfully updated contact with id 65ca67e7ae7f10c88b598384
+            data:
+              type: object
+              $ref: ../../../components/schemas/patch.yaml
+  '400':
+    $ref: ../../../components/responses/400.yaml
+  '404':
+    $ref: ../../../components/responses/404.yaml
